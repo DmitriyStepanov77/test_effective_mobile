@@ -8,6 +8,7 @@ import ru.effective.mobile.model.enums.TaskPriority;
 import ru.effective.mobile.model.enums.TaskState;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Entity
@@ -29,4 +30,6 @@ public class Task {
     private TaskPriority priority;
     private TaskState state;
     private LocalDateTime created;
+    @OneToMany(mappedBy = "task")
+    private List<Comment> comments;
 }

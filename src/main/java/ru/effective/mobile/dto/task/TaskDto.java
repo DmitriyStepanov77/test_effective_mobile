@@ -3,6 +3,7 @@ package ru.effective.mobile.dto.task;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.effective.mobile.dto.comment.CommentDto;
 import ru.effective.mobile.model.enums.TaskPriority;
 import ru.effective.mobile.model.enums.TaskState;
 
@@ -19,4 +20,5 @@ public class TaskDto {
     private TaskPriority priority;
     private TaskState state;
     private LocalDateTime created;
+    private CommentDto comments;
 }

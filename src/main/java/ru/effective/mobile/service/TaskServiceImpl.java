@@ -6,13 +6,19 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import ru.effective.mobile.dto.task.NewTaskDto;
 import ru.effective.mobile.dto.mapper.TaskMapper;
+import ru.effective.mobile.dto.task.UpdateTaskAdminDto;
+import ru.effective.mobile.dto.task.UpdateTaskUserDto;
+import ru.effective.mobile.exception.ConflictException;
 import ru.effective.mobile.exception.NotFoundException;
 import ru.effective.mobile.model.Task;
+import ru.effective.mobile.model.User;
 import ru.effective.mobile.model.enums.TaskState;
+import ru.effective.mobile.model.enums.UserRole;
 import ru.effective.mobile.repository.TaskRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Log4j2
 @Service
@@ -40,8 +46,42 @@ public class TaskServiceImpl {
         return taskRepository.save(task);
     }
 
-    public Task getTask(Long taskId) {
-        return taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Задачи с таким id нет."));
+    public Task getTask(Long taskId, String username) {
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Задачи с таким id нет."));
+        User user = userService.getUserByUsername(username);
+        if(user.getRole() != UserRole.ROLE_ADMIN && task.getPerformer() != user)
+            throw new ConflictException("Пользователь не является админом или исполнителем задачи.");
+        return task;
+    }
+
+    public Task updateTaskByUser(Long taskId, UpdateTaskUserDto updateTaskUserDto, String username) {
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Задачи с таким id нет."));
+        User user = userService.getUserByUsername(username);
+        if(task.getPerformer() != user)
+            throw new ConflictException("Пользователь не является исполнителем задачи.");
+        task.setState(updateTaskUserDto.getState());
+        return taskRepository.save(task);
+    }
+
+    public Task updateTaskByAdmin(Long taskId, UpdateTaskAdminDto updateTaskAdminDto, String username) {
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Задачи с таким id нет."));
+        User user = userService.getUserByUsername(username);
+        if(task.getPerformer() != user)
+            throw new ConflictException("Пользователь не является администратором.");
+
+        Optional.ofNullable(updateTaskAdminDto.getTitle()).ifPresent(task::setTitle);
+        Optional.ofNullable(updateTaskAdminDto.getDescription()).ifPresent(task::setDescription);
+        Optional.ofNullable(updateTaskAdminDto.getPriority()).ifPresent(task::setPriority);
+        Optional.ofNullable(updateTaskAdminDto.getState()).ifPresent(task::setState);
+
+        if (updateTaskAdminDto.getPerformer() != null)
+            task.setPerformer(userService.getUserByUsername(updateTaskAdminDto.getPerformer()));
+
+        return taskRepository.save(task);
+    }
+
+    public void deleteTask(Long taskId) {
+        taskRepository.deleteById(taskId);
     }
 
     public List<Task> getTasksByAuthor(String author) {
