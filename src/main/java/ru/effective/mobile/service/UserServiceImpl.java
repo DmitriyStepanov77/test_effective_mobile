@@ -12,7 +12,7 @@ import ru.effective.mobile.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl {
+public class UserServiceImpl implements UserService {
     private final UserRepository repository;
 
     /**
@@ -20,6 +20,7 @@ public class UserServiceImpl {
      *
      * @return сохраненный пользователь
      */
+    @Override
     public User saveUser(User user) {
         return repository.save(user);
     }
@@ -30,6 +31,7 @@ public class UserServiceImpl {
      *
      * @return созданный пользователь
      */
+    @Override
     public User createUser(User user) {
         if (repository.existsByUsername(user.getUsername())) {
             // Заменить на свои исключения
@@ -48,6 +50,7 @@ public class UserServiceImpl {
      *
      * @return пользователь
      */
+    @Override
     public User getUserByUsername(String username) {
         return repository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("Пользователь с именем " + username + " не найден"));
@@ -61,6 +64,7 @@ public class UserServiceImpl {
      *
      * @return пользователь
      */
+    @Override
     public UserDetailsService userDetailsService() {
         return this::getUserByUsername;
     }
@@ -70,6 +74,7 @@ public class UserServiceImpl {
      *
      * @return текущий пользователь
      */
+    @Override
     public User getCurrentUser() {
         // Получение имени пользователя из контекста Spring Security
         var username = SecurityContextHolder.getContext().getAuthentication().getName();

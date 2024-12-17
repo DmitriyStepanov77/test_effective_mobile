@@ -8,6 +8,8 @@ import ru.effective.mobile.model.enums.TaskPriority;
 import ru.effective.mobile.model.enums.TaskState;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,5 +22,5 @@ public class TaskDto {
     private TaskPriority priority;
     private TaskState state;
     private LocalDateTime created;
-    private CommentDto comments;
+    private List<CommentDto> comments;
 }

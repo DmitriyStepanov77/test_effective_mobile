@@ -2,6 +2,9 @@ package ru.effective.mobile.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import ru.effective.mobile.dto.task.NewTaskDto;
@@ -24,16 +27,19 @@ import java.util.Optional;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class TaskServiceImpl {
+public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
-    private final UserServiceImpl userService;
+    private final UserService userService;
     private final TaskMapper taskMapper;
 
     /**
      * Создание задачи
      *
+     * @param newTaskDto DTO объект, содержащий данные о задачи
+     * @param username   имя пользователя, который добавляет задачу
      * @return созданная задача
      */
+    @Override
     public Task createTask(NewTaskDto newTaskDto, String username) {
 
         Task task = taskMapper.toEntity(newTaskDto);
@@ -46,27 +52,56 @@ public class TaskServiceImpl {
         return taskRepository.save(task);
     }
 
+    /**
+     * Получение задачи по id
+     *
+     * @param taskId   id задачи
+     * @param username имя пользователя, который получает задачу
+     * @return задача
+     */
+    @Override
     public Task getTask(Long taskId, String username) {
+        log.info("Get task by id = {}, by user = {}.", taskId, username);
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Задачи с таким id нет."));
         User user = userService.getUserByUsername(username);
-        if(user.getRole() != UserRole.ROLE_ADMIN && task.getPerformer() != user)
+        if (user.getRole() != UserRole.ROLE_ADMIN && task.getPerformer() != user)
             throw new ConflictException("Пользователь не является админом или исполнителем задачи.");
         return task;
     }
 
+    /**
+     * Обновление задачи пользователем по id
+     *
+     * @param taskId            id задачи
+     * @param updateTaskUserDto DTO объект, содержащий данные об обновленной задачи
+     * @param username          имя пользователя, который обновляет задачу
+     * @return задача
+     */
+    @Override
     public Task updateTaskByUser(Long taskId, UpdateTaskUserDto updateTaskUserDto, String username) {
+        log.info("Update task by id = {}, by user = {}.", taskId, username);
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Задачи с таким id нет."));
         User user = userService.getUserByUsername(username);
-        if(task.getPerformer() != user)
+        if (task.getPerformer() != user)
             throw new ConflictException("Пользователь не является исполнителем задачи.");
         task.setState(updateTaskUserDto.getState());
         return taskRepository.save(task);
     }
 
+    /**
+     * Обновление задачи администратором по id
+     *
+     * @param taskId             id задачи
+     * @param updateTaskAdminDto DTO объект, содержащий данные об обновленной задачи
+     * @param username           имя пользователя, который обновляет задачу
+     * @return задача
+     */
+    @Override
     public Task updateTaskByAdmin(Long taskId, UpdateTaskAdminDto updateTaskAdminDto, String username) {
+        log.info("Update task by id = {}, by admin = {}.", taskId, username);
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Задачи с таким id нет."));
         User user = userService.getUserByUsername(username);
-        if(task.getPerformer() != user)
+        if (task.getPerformer() != user)
             throw new ConflictException("Пользователь не является администратором.");
 
         Optional.ofNullable(updateTaskAdminDto.getTitle()).ifPresent(task::setTitle);
@@ -80,16 +115,39 @@ public class TaskServiceImpl {
         return taskRepository.save(task);
     }
 
-    public void deleteTask(Long taskId) {
+    /**
+     * Удаление задачи по id
+     *
+     * @param taskId id задачи
+     */
+    @Override
+    public void deleteTask(Long taskId, String userName) {
+        log.info("Delete task by id = {}, by user = {}.", taskId, userName);
         taskRepository.deleteById(taskId);
     }
 
-    public List<Task> getTasksByAuthor(String author) {
-        return taskRepository.findAllByAuthorId(userService.getUserByUsername(author).getId());
+    /**
+     * Получение всех задач, автором которых является заданный пользователь
+     *
+     * @param author имя заданного пользователя
+     * @return список задач
+     */
+    @Override
+    public List<Task> getTasksByAuthor(String author, int from, int size) {
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, "id"));
+        return taskRepository.findAllByAuthorId(userService.getUserByUsername(author).getId(), pageable);
     }
 
-    public List<Task> getTasksByPerformer(String performer) {
-        return taskRepository.findAllByPerformerId(userService.getUserByUsername(performer).getId());
+    /**
+     * Получение всех задач, исполнителем которых является заданный пользователь
+     *
+     * @param performer имя заданного пользователя
+     * @return список задач
+     */
+    @Override
+    public List<Task> getTasksByPerformer(String performer, int from, int size) {
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, "id"));
+        return taskRepository.findAllByPerformerId(userService.getUserByUsername(performer).getId(), pageable);
     }
 
 }

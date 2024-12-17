@@ -26,6 +26,5 @@ public class NewTaskDto {
     @NotBlank(message = "Имя исполнителя не может быть пустыми")
     private String performer;
     @Schema(description = "Приоритет задачи", example = "High")
-    @NotBlank(message = "Приоритет задачи не может быть пустыми")
     private TaskPriority priority;
 }

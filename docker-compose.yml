@@ -1,7 +1,7 @@
 services:
   app-db:
     image: postgres:16.1
-    container_name: postgres-stat
+    container_name: postgres
     ports:
       - "5432:5432"
     environment:
@@ -13,3 +13,18 @@ services:
       timeout: 5s
       interval: 5s
       retries: 10
+
+  app-service:
+    build: .
+    image: test_effective_mobile-image
+    container_name: test_effective_mobile-image
+    ports:
+      - "8080:8080"
+    depends_on:
+      - app-db
+    environment:
+      - TZ=Europe/Samara
+      - PGTZ=Europe/Samara
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://app-db:5432/postgres
+      - SPRING_DATASOURCE_USERNAME=dbuser
+      - SPRING_DATASOURCE_PASSWORD=12345

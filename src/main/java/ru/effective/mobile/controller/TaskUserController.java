@@ -4,13 +4,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.effective.mobile.dto.mapper.TaskMapper;
-import ru.effective.mobile.dto.task.NewTaskDto;
 import ru.effective.mobile.dto.task.TaskDto;
 import ru.effective.mobile.dto.task.UpdateTaskUserDto;
-import ru.effective.mobile.service.TaskServiceImpl;
+import ru.effective.mobile.service.TaskService;
 
 import java.security.Principal;
 import java.util.List;
@@ -20,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Задачи")
 public class TaskUserController {
-    private final TaskServiceImpl taskService;
+    private final TaskService taskService;
     private final TaskMapper taskMapper;
 
     @GetMapping("/{taskId}")
@@ -31,8 +29,10 @@ public class TaskUserController {
 
     @GetMapping
     @Operation(summary = "Получение всех задач назначенных пользователю")
-    public List<TaskDto> getTasks(Principal principal) {
-        return taskService.getTasksByPerformer(principal.getName()).stream()
+    public List<TaskDto> getTasks(Principal principal,
+                                  @RequestParam(defaultValue = "0") int from,
+                                  @RequestParam(defaultValue = "10") int size) {
+        return taskService.getTasksByPerformer(principal.getName(), from, size).stream()
                 .map(taskMapper::toModel).toList();
     }
 

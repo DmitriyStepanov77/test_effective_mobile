@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import ru.effective.mobile.model.enums.UserRole;
 
 @Data
 @Schema(description = "Запрос на регистрацию пользователя")
@@ -23,4 +24,7 @@ public class RegistrationUserDto {
     @Schema(description = "Пароль", example = "my_1secret1_password")
     @Size(max = 255, message = "Длина пароля должна быть не более 255 символов")
     private String password;
+
+    @Schema(description = "Роль", example = "ROLE_ADMIN")
+    private UserRole role;
 }
